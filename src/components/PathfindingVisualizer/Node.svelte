@@ -1,17 +1,18 @@
 <script lang="ts">
-  export let isFinish, isStart, isVisited, isOnShortestPath, isOnQueue, distance;
+  export let isFinish, isStart, isVisited, isOnShortestPath, isOnQueue, distance, isWall;
 </script>
 
 <style>
   .node {
     box-sizing: border-box;
-    width: 32px;
-    height: 32px;
-    outline: 1px solid rgba(0, 37, 32, 0.774);
+    width: 20px;
+    height: 20px;
+    outline: 0.5px solid rgba(0, 37, 32, 0.774);
     display: inline-block;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-size: xx-small;
   }
 
   .node-finish {
@@ -42,6 +43,10 @@
     background-image: linear-gradient(-45deg, #ffc79677 0%, #ff6b9577 100%);
   }
 
+  .node-wall {
+    background-image: linear-gradient(to right, #434343 0%, black 100%);
+  }
+
   .node-start.node-visited {
     background-image: linear-gradient(
       -45deg,
@@ -58,8 +63,8 @@
   }
 </style>
 
-<div class={`node ${isFinish ? 'node-finish' : isStart ? 'node-start' : ''} ${isVisited ? 'node-visited' : ''} ${isOnShortestPath ? 'node-shortest-path' : ''} ${isOnQueue ? 'node-on-queue' : ''}`}>
+<div class={`node ${isWall ? 'node-wall' : ''} ${isFinish ? 'node-finish' : isStart ? 'node-start' : ''} ${isVisited ? 'node-visited' : ''} ${isOnShortestPath ? 'node-shortest-path' : ''} ${isOnQueue ? 'node-on-queue' : ''}`}>
   {#if isOnShortestPath || isVisited}
-    {distance}
+    {distance.toFixed(2)}
   {/if}
 </div>

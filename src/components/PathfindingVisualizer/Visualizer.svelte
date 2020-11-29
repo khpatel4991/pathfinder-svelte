@@ -5,21 +5,21 @@
   DijstrasReturnObject,
 } from '../../types';
   import Node from '$components/PathfindingVisualizer/Node.svelte';
-  const START_NODE_ROW = 0;
-  const START_NODE_COL = 0;
-  const FINISH_NODE_ROW = 19;
-  const FINISH_NODE_COL = 19;
-  const ROWS = 20;
-  const COLUMNS = 20;
+  let startNodeRow = 0;
+  let startNodeCol = 0;
+  let finishNodeRow = 19;
+  let finishNodeCol = 19;
+  let rows = 20;
+  let columns = 20;
+  let step = 0;
   let visualized = false;
   let algorithm = "astar";
   let grid: VisualizerNode[][] = buildGraph(
-    ROWS,
-    COLUMNS,
-    [START_NODE_ROW, START_NODE_COL],
-    [FINISH_NODE_ROW, FINISH_NODE_COL],
+    rows,
+    columns,
+    [startNodeRow, startNodeCol],
+    [finishNodeRow, finishNodeCol],
   );
-  let curr = 0;
   const onClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -29,13 +29,26 @@
   const onSliderChange = (e) => {
     const { target: { value } } = e;
     const n = Number(value);
-    curr = n;
+    step = n;
+    doWork();
+  }
+
+  const redrawGrid = () => {
+    grid = buildGraph(
+      rows,
+      columns,
+      [startNodeRow, startNodeCol],
+      [finishNodeRow, finishNodeCol],
+    );
+  }
+
+  const doWork = () => {
     const { visitedNodesInOrder, nodesInShortestPathOrder, queue } = workAlgorithm(
-      ROWS,
-      COLUMNS,
-      [START_NODE_ROW, START_NODE_COL],
-      [FINISH_NODE_ROW, FINISH_NODE_COL],
-      curr,
+      rows,
+      columns,
+      [startNodeRow, startNodeCol],
+      [finishNodeRow, finishNodeCol],
+      step,
       algorithm === "dijstra" ? dijkstraOg : astar,
     );
     const nodesInShortestPath = Number.isFinite(
@@ -144,7 +157,7 @@
     const hueristics = Array.from(Array(grid.length), (_, i) => Array.from(Array(grid[0].length), (_, j) => {
       return Math.sqrt((grid[i][j].row - targetNodeCoords[0]) ** 2 + (grid[i][j].column - targetNodeCoords[1]) ** 2)
     }));
-    queue.push({ ...startNode, distance: 0 });
+    queue.push({ ...startNode, distance: hueristics[startNodeCoords[0]][startNodeCoords[1]] });
     while (queue.length) {
       if (visitedNodesInOrder.length >= maxWanted) {
         return {
@@ -312,11 +325,91 @@
 
   .row {
     box-sizing: border-box;
-    height: 32px;
+    height: 20px;
   }
 </style>
 
 <div class="container">
+  <div>
+    <div>
+      <label disabled={visualized} for="rows">Rows: {rows}</label>
+      <input
+        type="range"
+        min={1}
+        max={100}
+        disabled={visualized}
+        name="rows"
+        id="rows"
+        bind:value={rows}
+        on:input={redrawGrid}
+      />
+    </div>
+    <div>
+      <label disabled={visualized} for="columns">Columns: {columns}</label>
+      <input
+        type="range"
+        min={1}
+        max={100}
+        disabled={visualized}
+        name="columns"
+        id="columns"
+        bind:value={columns}
+        on:input={redrawGrid}
+      />
+    </div>
+    <div>
+      <label disabled={visualized} for="startNodeRow">Start Row: {startNodeRow}</label>
+      <input
+        type="range"
+        min={0}
+        max={rows - 1}
+        disabled={visualized}
+        name="startNodeRow"
+        id="startNodeRow"
+        bind:value={startNodeRow}
+        on:input={redrawGrid}
+      />
+    </div>
+    <div>
+      <label disabled={visualized} for="startNodeCol">Start Col: {startNodeCol}</label>
+      <input
+        type="range"
+        min={0}
+        max={columns - 1}
+        disabled={visualized}
+        name="startNodeCol"
+        id="startNodeCol"
+        bind:value={startNodeCol}
+        on:input={redrawGrid}
+      />
+    </div>
+    <div>
+      <label disabled={visualized} for="finishNodeRow">Target Row: {finishNodeRow}</label>
+      <input
+        type="range"
+        min={0}
+        max={rows - 1}
+        disabled={visualized}
+        name="finishNodeRow"
+        id="finishNodeRow"
+        bind:value={finishNodeRow}
+        on:input={redrawGrid}
+      />
+    </div>
+    <div>
+      <label disabled={visualized} for="finishNodeCol">Target Col: {finishNodeCol}</label>
+      <input
+        type="range"
+        min={0}
+        max={columns - 1}
+        disabled={visualized}
+        name="finishNodeCol"
+        id="finishNodeCol"
+        bind:value={finishNodeCol}
+        on:input={redrawGrid}
+      />
+    </div>
+  </div>
   <div>
     <select disabled={visualized} bind:value={algorithm}>
       <option value="dijstra">Dijkstra</option>
@@ -325,25 +418,27 @@
     <button class="runbutton" on:click={onClick}>
       {visualized ? 'Reset' : 'Run'}
     </button>
-    <div>
-      <label disabled={!visualized} for="slider">Visited Nodes: {curr}</label>
-      <input
-        type="range"
-        min={-1}
-        max={ROWS * COLUMNS}
-        disabled={!visualized}
-        name="slider"
-        id="slider"
-        on:input={onSliderChange}
-        bind:value={curr}
-      />
-    </div>
+    {#if visualized}
+      <div>
+        <label disabled={!visualized} for="slider">Visited Nodes: {step}</label>
+        <input
+          type="range"
+          min={-1}
+          max={rows * columns}
+          disabled={!visualized}
+          name="slider"
+          id="slider"
+          on:input={onSliderChange}
+          bind:value={step}
+        />
+      </div>
+    {/if}
   </div>
   <div class="grid">
     {#each grid as row}
       <div class="row">
         {#each row as node (node.id)}
-          <Node isFinish={node.isFinish} isStart={node.isStart} isVisited={node.isVisited} isOnShortestPath={node.isOnShortestPath} isOnQueue={node.isOnQueue} distance={node.distance} />
+          <Node isWall={node.isWall} isFinish={node.isFinish} isStart={node.isStart} isVisited={node.isVisited} isOnShortestPath={node.isOnShortestPath} isOnQueue={node.isOnQueue} distance={node.distance} />
         {/each}
       </div>
     {/each}
