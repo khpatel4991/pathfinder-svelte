@@ -67,7 +67,7 @@
 </style>
 
 <div on:mouseover={handleMouseOver} class={`node ${isWall ? 'node-wall' : ''} ${isFinish ? 'node-finish' : isStart ? 'node-start' : ''} ${isVisited ? 'node-visited' : ''} ${isOnShortestPath ? 'node-shortest-path' : ''} ${isOnQueue ? 'node-on-queue' : ''}`}>
-  {#if isOnShortestPath || isVisited}
+  {#if isOnShortestPath || isVisited || isOnQueue}
     {distance.toFixed(2)}
   {/if}
 </div>
