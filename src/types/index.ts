@@ -10,12 +10,21 @@ export interface VisualizerNode {
   isOnShortestPath: boolean;
   isOnQueue: boolean;
   previousNode?: string;
-}
+};
 
 export type NodeCoordinates = [row: number, column: number];
 
-export interface DijstrasReturnObject {
+export interface GraphAlgorithmResults {
   nodesInShortestPathOrder: VisualizerNode[];
   queue: VisualizerNode[];
   visitedNodesInOrder: VisualizerNode[];
-}
+};
+
+export type AlgorithmFn = (
+  grid: VisualizerNode[][],
+  startNodeCoords: NodeCoordinates,
+  targetNodeCoords: NodeCoordinates,
+  maxWanted: number
+) => Pick<GraphAlgorithmResults, "visitedNodesInOrder" | "queue">;
+
+export type GraphAlgorithm = "astar" | "dijkstra";

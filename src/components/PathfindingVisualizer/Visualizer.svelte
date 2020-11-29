@@ -1,6 +1,7 @@
 <script lang="ts">
   import type {
   VisualizerNode,
+  GraphAlgorithm
 } from '../../types';
 import { buildGraph, workAlgorithm, astar, dijkstraOg } from "../../algorithms";
   import Node from '$components/PathfindingVisualizer/Node.svelte';
@@ -12,7 +13,7 @@ import { buildGraph, workAlgorithm, astar, dijkstraOg } from "../../algorithms";
   let columns = 20;
   let step = 0;
   let visualized = false;
-  let algorithm = "astar";
+  let algorithm: GraphAlgorithm = "astar";
   let grid = buildGraph(
     rows,
     columns,
@@ -46,7 +47,7 @@ import { buildGraph, workAlgorithm, astar, dijkstraOg } from "../../algorithms";
       [startNodeRow, startNodeCol],
       [finishNodeRow, finishNodeCol],
       step,
-      algorithm === "dijstra" ? dijkstraOg : astar,
+      algorithm,
     );
     const nodesInShortestPath = Number.isFinite(
       nodesInShortestPathOrder[0].distance,
@@ -188,10 +189,10 @@ import { buildGraph, workAlgorithm, astar, dijkstraOg } from "../../algorithms";
     </div>
   </div>
   <div>
-    <label for="algorithm">Algorithm:</label>
+    <label for="algorithm">Algorithm :</label>
     <select id="algorithm" disabled={visualized} bind:value={algorithm}>
-      <option value="dijstra">Dijkstra</option>
       <option value="astar">A *</option>
+      <option value="dijkstra">Dijkstra</option>
     </select>
     <button class="runbutton" on:click={onClick}>
       {visualized ? 'Reset' : 'Run'}

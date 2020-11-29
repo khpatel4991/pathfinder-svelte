@@ -13,7 +13,7 @@
 		"@sveltejs/snowpack-config": "0.0.5",
 		"svelte": "^3.30.0",
 		"svelte-preprocess": "^4.0.0",
-		"tslib": "^2.0.0",
-		"typescript": "^4.0.0"
+		"tslib": "^2.0.3",
+		"typescript": "^4.1.2"
 	}
 }
