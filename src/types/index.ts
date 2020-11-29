@@ -18,6 +18,7 @@ export interface GraphAlgorithmResults {
   nodesInShortestPathOrder: VisualizerNode[];
   queue: VisualizerNode[];
   visitedNodesInOrder: VisualizerNode[];
+  stepsToFind: number;
 };
 
 export type AlgorithmFn = (
@@ -25,6 +26,6 @@ export type AlgorithmFn = (
   startNodeCoords: NodeCoordinates,
   targetNodeCoords: NodeCoordinates,
   maxWanted: number
-) => Pick<GraphAlgorithmResults, "visitedNodesInOrder" | "queue">;
+) => Omit<GraphAlgorithmResults, "nodesInShortestPathOrder">;
 
 export type GraphAlgorithm = "astar" | "dijkstra";

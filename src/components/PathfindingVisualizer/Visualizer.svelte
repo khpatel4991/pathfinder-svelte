@@ -53,6 +53,20 @@ import { buildGraph, workAlgorithm } from "../../algorithms";
     }
   }
 
+  const handleKeydown = (event) => {
+    const { key } = event;
+    switch (key) {
+      case "D":
+      case "d":
+        if(!visualized) {
+          toggleWallMode();
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
   const resetWalls = () => {
     grid.forEach((row) => {
       row.forEach((node) => {
@@ -70,7 +84,7 @@ import { buildGraph, workAlgorithm } from "../../algorithms";
         return acc2;
       }, acc);
     }, new Set<string>());
-    const { visitedNodesInOrder, nodesInShortestPathOrder, queue } = workAlgorithm(
+    const { visitedNodesInOrder, nodesInShortestPathOrder, queue, stepsToFind } = workAlgorithm(
       rows,
       columns,
       [startNodeRow, startNodeCol],
@@ -79,15 +93,10 @@ import { buildGraph, workAlgorithm } from "../../algorithms";
       step,
       algorithm,
     );
-    const nodesInShortestPath = Number.isFinite(
-      nodesInShortestPathOrder[0].distance,
-    )
-      ? nodesInShortestPathOrder
-      : [];
     const visitedNodeMap = visitedNodesInOrder.reduce((acc, node) => {
       return acc.set(node.id, node);
     }, new Map<string, VisualizerNode>());
-    const shortestPathNodeMap = nodesInShortestPath.reduce((acc, node) => {
+    const shortestPathNodeMap = nodesInShortestPathOrder.reduce((acc, node) => {
       return acc.set(node.id, node);
     }, new Map<string, VisualizerNode>());
     const queuedNodeMap = queue.reduce((acc, node) => {
@@ -106,8 +115,16 @@ import { buildGraph, workAlgorithm } from "../../algorithms";
           node.distance = Number.POSITIVE_INFINITY;
           node.previousNode = undefined;
         }
-        node.isOnShortestPath = shortestPathNodeMap.has(node.id);
         node.isOnQueue = queuedNodeMap.has(node.id);
+        if(queuedNodeMap.has(node.id)) {
+          const queuedNode = queuedNodeMap.get(node.id);
+          node.isVisited = queuedNode.isVisited;
+          node.distance = queuedNode.distance;
+          node.previousNode = queuedNode.previousNode;
+        }
+        if(stepsToFind > -1) {
+          node.isOnShortestPath = shortestPathNodeMap.has(node.id);
+        }
       });
     });
     grid = grid;
@@ -137,7 +154,7 @@ import { buildGraph, workAlgorithm } from "../../algorithms";
     height: 20px;
   }
 </style>
-
+<svelte:window on:keydown={handleKeydown}/>
 <div class="container">
   <div>
     <div>
@@ -243,7 +260,7 @@ import { buildGraph, workAlgorithm } from "../../algorithms";
       />
     {:else}
       <button class="wallmode" on:click={toggleWallMode}>
-        {wallmode ? "Stop Drawing Wall" : "Draw Wall"}
+        {wallmode ? "Stop (D)rawing Wall" : "Draw Wall (D)"}
       </button>
       <button class="resetwall" on:click={resetWalls}>
         Reset Walls

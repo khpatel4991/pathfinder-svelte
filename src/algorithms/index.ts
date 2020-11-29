@@ -53,7 +53,7 @@ export function workAlgorithm(
     astar: astar,
     dijkstra: dijkstraOg,
   };
-  const { queue, visitedNodesInOrder } = map[algorithm].call(
+  const { queue, visitedNodesInOrder, stepsToFind } = map[algorithm].call(
     this,
     g,
     startNodeCoords,
@@ -68,6 +68,7 @@ export function workAlgorithm(
     nodesInShortestPathOrder,
     queue,
     visitedNodesInOrder,
+    stepsToFind,
   };
 }
 
@@ -77,13 +78,15 @@ export function astar(
   startNodeCoords: NodeCoordinates,
   targetNodeCoords: NodeCoordinates,
   maxWanted: number
-): Pick<GraphAlgorithmResults, "visitedNodesInOrder" | "queue"> {
+): Omit<GraphAlgorithmResults, "nodesInShortestPathOrder"> {
   const visitedNodesInOrder: VisualizerNode[] = [];
   const queue: VisualizerNode[] = [];
-  if (startNodeCoords === targetNodeCoords) {
+  let i = 0;
+  if (startNodeCoords[0] === targetNodeCoords[0] && startNodeCoords[1] === targetNodeCoords[1]) {
     return {
       visitedNodesInOrder,
       queue,
+      stepsToFind: 0,
     };
   }
   const startNode = grid[startNodeCoords[0]][startNodeCoords[1]];
@@ -100,19 +103,11 @@ export function astar(
     ...startNode,
     distance: hueristics[startNodeCoords[0]][startNodeCoords[1]],
   });
-  while (queue.length) {
-    if (visitedNodesInOrder.length >= maxWanted) {
-      return {
-        visitedNodesInOrder,
-        queue,
-      };
-    }
+  while (queue.length && (maxWanted > visitedNodesInOrder.length)) {
+    i += 1;
     queue.sort(nodesByAscDistance);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const closestNode = queue.shift()!;
-    if (grid[closestNode.row][closestNode.column].isVisited) {
-      continue;
-    }
     // If we encounter a wall, we skip it.
     if (closestNode.isWall) {
       continue;
@@ -123,16 +118,19 @@ export function astar(
       return {
         visitedNodesInOrder,
         queue,
+        stepsToFind: -1,
+      };
+    }
+    if (closestNode.id === targetNode.id) {
+      return {
+        visitedNodesInOrder,
+        queue,
+        stepsToFind: i,
       };
     }
     grid[closestNode.row][closestNode.column].isVisited = true;
     grid[closestNode.row][closestNode.column].distance = closestNode.distance;
     visitedNodesInOrder.push(grid[closestNode.row][closestNode.column]);
-    if (closestNode.id === targetNode.id)
-      return {
-        visitedNodesInOrder,
-        queue,
-      };
     const unvisitedNeighbors = getUnvisitedNeighbors(closestNode, grid);
     const unwalledNeighbors = unvisitedNeighbors.filter((n) => !n.isWall);
     unwalledNeighbors.forEach((n) => {
@@ -141,10 +139,10 @@ export function astar(
       queue.push(grid[n.row][n.column]);
     });
   }
-  // never reach here for valid inputs.
   return {
     visitedNodesInOrder,
     queue,
+    stepsToFind: -1,
   };
 }
 
@@ -154,25 +152,22 @@ export function dijkstraOg(
   startNodeCoords: NodeCoordinates,
   targetNodeCoords: NodeCoordinates,
   maxWanted: number
-): Pick<GraphAlgorithmResults, "visitedNodesInOrder" | "queue"> {
+): Omit<GraphAlgorithmResults, "nodesInShortestPathOrder"> {
   const visitedNodesInOrder: VisualizerNode[] = [];
   const queue: VisualizerNode[] = [];
-  if (startNodeCoords === targetNodeCoords) {
+  if (startNodeCoords[0] === targetNodeCoords[0] && startNodeCoords[1] === targetNodeCoords[1]) {
     return {
       visitedNodesInOrder,
       queue,
+      stepsToFind: 0,
     };
   }
+  let i = 0;
   const startNode = grid[startNodeCoords[0]][startNodeCoords[1]];
   const targetNode = grid[targetNodeCoords[0]][targetNodeCoords[1]];
   queue.push({ ...startNode, distance: 0 });
-  while (queue.length) {
-    if (visitedNodesInOrder.length >= maxWanted) {
-      return {
-        visitedNodesInOrder,
-        queue,
-      };
-    }
+  while (queue.length && (maxWanted > visitedNodesInOrder.length)) {
+    i += 1;
     queue.sort(nodesByAscDistance);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const closestNode = queue.shift()!;
@@ -189,16 +184,19 @@ export function dijkstraOg(
       return {
         visitedNodesInOrder,
         queue,
+        stepsToFind: -1,
+      };
+    }
+    if (closestNode.id === targetNode.id) {
+      return {
+        visitedNodesInOrder,
+        queue,
+        stepsToFind: i,
       };
     }
     grid[closestNode.row][closestNode.column].isVisited = true;
     grid[closestNode.row][closestNode.column].distance = closestNode.distance;
     visitedNodesInOrder.push(grid[closestNode.row][closestNode.column]);
-    if (closestNode.id === targetNode.id)
-      return {
-        visitedNodesInOrder,
-        queue,
-      };
     const unvisitedNeighbors = getUnvisitedNeighbors(closestNode, grid);
     const unwalledNeighbors = unvisitedNeighbors.filter((n) => !n.isWall);
     unwalledNeighbors.forEach((n) => {
@@ -211,6 +209,7 @@ export function dijkstraOg(
   return {
     visitedNodesInOrder,
     queue,
+    stepsToFind: -1,
   };
 }
 
