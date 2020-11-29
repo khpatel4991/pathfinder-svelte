@@ -1,6 +1,8 @@
-<script>
+<script context="module">
 	import Visualizer from '$components/PathfindingVisualizer/Visualizer.svelte';
+	export const prerender = true;
 </script>
+
 
 <main>
 	<Visualizer />
