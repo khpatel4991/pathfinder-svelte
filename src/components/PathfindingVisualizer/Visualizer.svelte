@@ -411,7 +411,8 @@
     </div>
   </div>
   <div>
-    <select disabled={visualized} bind:value={algorithm}>
+    <label for="algorithm">Algorithm:</label>
+    <select id="algorithm" disabled={visualized} bind:value={algorithm}>
       <option value="dijstra">Dijkstra</option>
       <option value="astar">A *</option>
     </select>
