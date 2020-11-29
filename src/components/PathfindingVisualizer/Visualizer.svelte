@@ -1,9 +1,9 @@
 <script lang="ts">
   import type {
   VisualizerNode,
-  GraphAlgorithm
+  GraphAlgorithm,
 } from '../../types';
-import { buildGraph, workAlgorithm, astar, dijkstraOg } from "../../algorithms";
+import { buildGraph, workAlgorithm } from "../../algorithms";
   import Node from '$components/PathfindingVisualizer/Node.svelte';
   let startNodeRow = 0;
   let startNodeCol = 0;
@@ -13,6 +13,7 @@ import { buildGraph, workAlgorithm, astar, dijkstraOg } from "../../algorithms";
   let columns = 20;
   let step = 0;
   let visualized = false;
+  let wallmode = false;
   let algorithm: GraphAlgorithm = "astar";
   let grid = buildGraph(
     rows,
@@ -39,13 +40,42 @@ import { buildGraph, workAlgorithm, astar, dijkstraOg } from "../../algorithms";
       [startNodeRow, startNodeCol],
       [finishNodeRow, finishNodeCol],
     );
+    wallmode = false;
   }
+
+  const toggleWallMode = () => {
+    wallmode = !wallmode;
+  }
+
+  const handleMouseOverNode = (row, column) => {
+    if(wallmode) {
+      grid[row][column].isWall = true;
+    }
+  }
+
+  const resetWalls = () => {
+    grid.forEach((row) => {
+      row.forEach((node) => {
+        node.isWall = false;
+      });
+    });
+    grid = grid;
+    wallmode = false;
+  }
+
   const doWork = () => {
+    const walled = grid.reduce((acc, row, i) => {
+      return row.reduce((acc2, node, j) => {
+        if(node.isWall) { return acc2.add(node.id) }
+        return acc2;
+      }, acc);
+    }, new Set<string>());
     const { visitedNodesInOrder, nodesInShortestPathOrder, queue } = workAlgorithm(
       rows,
       columns,
       [startNodeRow, startNodeCol],
       [finishNodeRow, finishNodeCol],
+      walled,
       step,
       algorithm,
     );
@@ -81,6 +111,7 @@ import { buildGraph, workAlgorithm, astar, dijkstraOg } from "../../algorithms";
       });
     });
     grid = grid;
+    wallmode = false;
   }
 </script>
 
@@ -197,27 +228,34 @@ import { buildGraph, workAlgorithm, astar, dijkstraOg } from "../../algorithms";
     <button class="runbutton" on:click={onClick}>
       {visualized ? 'Reset' : 'Run'}
     </button>
+    <div>
     {#if visualized}
-      <div>
-        <label disabled={!visualized} for="slider">Visited Nodes: {step}</label>
-        <input
-          type="range"
-          min={-1}
-          max={rows * columns}
-          disabled={!visualized}
-          name="slider"
-          id="slider"
-          on:input={onSliderChange}
-          bind:value={step}
-        />
-      </div>
+      <label disabled={!visualized} for="slider">Visited Nodes: {step}</label>
+      <input
+        type="range"
+        min={-1}
+        max={rows * columns}
+        disabled={!visualized}
+        name="slider"
+        id="slider"
+        on:input={onSliderChange}
+        bind:value={step}
+      />
+    {:else}
+      <button class="wallmode" on:click={toggleWallMode}>
+        {wallmode ? "Stop Drawing Wall" : "Draw Wall"}
+      </button>
+      <button class="resetwall" on:click={resetWalls}>
+        Reset Walls
+      </button>
     {/if}
+    </div>
   </div>
   <div class="grid">
     {#each grid as row}
       <div class="row">
         {#each row as node (node.id)}
-          <Node isWall={node.isWall} isFinish={node.isFinish} isStart={node.isStart} isVisited={node.isVisited} isOnShortestPath={node.isOnShortestPath} isOnQueue={node.isOnQueue} distance={node.distance} />
+          <Node row={node.row} column={node.column} onMouseOver={handleMouseOverNode} isWall={node.isWall} isFinish={node.isFinish} isStart={node.isStart} isVisited={node.isVisited} isOnShortestPath={node.isOnShortestPath} isOnQueue={node.isOnQueue} distance={node.distance} />
         {/each}
       </div>
     {/each}

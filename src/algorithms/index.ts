@@ -13,7 +13,8 @@ export function buildGraph(
   rows: number,
   columns: number,
   startNodeCoordinates: NodeCoordinates,
-  targetNodeCoordinates: NodeCoordinates
+  targetNodeCoordinates: NodeCoordinates,
+  wallNodeIds = new Set<string>()
 ): VisualizerNode[][] {
   return Array.from(Array(rows), (_, i) =>
     Array.from<any, VisualizerNode>(Array(columns), (__, j) => ({
@@ -23,7 +24,7 @@ export function buildGraph(
       isStart: i === startNodeCoordinates[0] && j === startNodeCoordinates[1],
       isFinish:
         i === targetNodeCoordinates[0] && j === targetNodeCoordinates[1],
-      isWall: false,
+      isWall: wallNodeIds.has(`n:${i}:${j}`),
       distance: Number.POSITIVE_INFINITY,
       isVisited: false,
       isOnShortestPath: false,
@@ -37,11 +38,17 @@ export function workAlgorithm(
   columns: number,
   startNodeCoords: NodeCoordinates,
   endNodeCoords: NodeCoordinates,
+  wallCoords = new Set<string>(),
   maxWanted = Number.POSITIVE_INFINITY,
-  algorithm: GraphAlgorithm
+  algorithm: GraphAlgorithm,
 ): GraphAlgorithmResults {
-  console.log(algorithm)
-  const g = buildGraph(rows, columns, startNodeCoords, endNodeCoords);
+  const g = buildGraph(
+    rows,
+    columns,
+    startNodeCoords,
+    endNodeCoords,
+    wallCoords
+  );
   const map: Record<GraphAlgorithm, AlgorithmFn> = {
     astar: astar,
     dijkstra: dijkstraOg,
@@ -127,7 +134,9 @@ export function astar(
         queue,
       };
     const unvisitedNeighbors = getUnvisitedNeighbors(closestNode, grid);
-    unvisitedNeighbors.forEach((n) => {
+    const unwalledNeighbors = unvisitedNeighbors.filter((n) => !n.isWall);
+    console.log({ v: unvisitedNeighbors.length, w: unwalledNeighbors.length });
+    unwalledNeighbors.forEach((n) => {
       grid[n.row][n.column].distance = hueristics[n.row][n.column];
       grid[n.row][n.column].previousNode = closestNode.id;
       queue.push(grid[n.row][n.column]);
@@ -192,7 +201,8 @@ export function dijkstraOg(
         queue,
       };
     const unvisitedNeighbors = getUnvisitedNeighbors(closestNode, grid);
-    unvisitedNeighbors.forEach((n) => {
+    const unwalledNeighbors = unvisitedNeighbors.filter((n) => !n.isWall);
+    unwalledNeighbors.forEach((n) => {
       grid[n.row][n.column].distance = closestNode.distance + 1;
       grid[n.row][n.column].previousNode = closestNode.id;
       queue.push(grid[n.row][n.column]);
@@ -208,7 +218,10 @@ export function dijkstraOg(
 const nodesByAscDistance = (nodeA: VisualizerNode, nodeB: VisualizerNode) =>
   nodeA.distance - nodeB.distance;
 
-function getUnvisitedNeighbors(node: VisualizerNode, grid: VisualizerNode[][]) {
+function getUnvisitedNeighbors(
+  node: VisualizerNode,
+  grid: VisualizerNode[][]
+): VisualizerNode[] {
   const neighbors = [];
   const { column, row } = node;
   if (row > 0) neighbors.push(grid[row - 1][column]);

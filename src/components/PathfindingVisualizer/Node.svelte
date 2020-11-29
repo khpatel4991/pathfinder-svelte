@@ -1,5 +1,8 @@
 <script lang="ts">
-  export let isFinish, isStart, isVisited, isOnShortestPath, isOnQueue, distance, isWall;
+  export let row, column, onMouseOver, isFinish, isStart, isVisited, isOnShortestPath, isOnQueue, distance, isWall;
+  const handleMouseOver = () => {
+    onMouseOver(row, column);
+  }
 </script>
 
 <style>
@@ -63,7 +66,7 @@
   }
 </style>
 
-<div class={`node ${isWall ? 'node-wall' : ''} ${isFinish ? 'node-finish' : isStart ? 'node-start' : ''} ${isVisited ? 'node-visited' : ''} ${isOnShortestPath ? 'node-shortest-path' : ''} ${isOnQueue ? 'node-on-queue' : ''}`}>
+<div on:mouseover={handleMouseOver} class={`node ${isWall ? 'node-wall' : ''} ${isFinish ? 'node-finish' : isStart ? 'node-start' : ''} ${isVisited ? 'node-visited' : ''} ${isOnShortestPath ? 'node-shortest-path' : ''} ${isOnQueue ? 'node-on-queue' : ''}`}>
   {#if isOnShortestPath || isVisited}
     {distance.toFixed(2)}
   {/if}
