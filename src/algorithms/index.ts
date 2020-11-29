@@ -135,7 +135,6 @@ export function astar(
       };
     const unvisitedNeighbors = getUnvisitedNeighbors(closestNode, grid);
     const unwalledNeighbors = unvisitedNeighbors.filter((n) => !n.isWall);
-    console.log({ v: unvisitedNeighbors.length, w: unwalledNeighbors.length });
     unwalledNeighbors.forEach((n) => {
       grid[n.row][n.column].distance = hueristics[n.row][n.column];
       grid[n.row][n.column].previousNode = closestNode.id;
