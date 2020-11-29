@@ -5,10 +5,10 @@
   DijstrasReturnObject,
 } from '../../types';
   import Node from '$components/PathfindingVisualizer/Node.svelte';
-  const START_NODE_ROW = 1;
-  const START_NODE_COL = 18;
-  const FINISH_NODE_ROW = 14;
-  const FINISH_NODE_COL = 1;
+  const START_NODE_ROW = 0;
+  const START_NODE_COL = 0;
+  const FINISH_NODE_ROW = 19;
+  const FINISH_NODE_COL = 19;
   const ROWS = 20;
   const COLUMNS = 20;
   let visualized = false;
@@ -19,68 +19,57 @@
     [START_NODE_ROW, START_NODE_COL],
     [FINISH_NODE_ROW, FINISH_NODE_COL],
   );
-  let curr = -1;
+  let curr = 0;
   const onClick = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     visualized = !visualized;
+    onSliderChange({ target: { value: 0 } })
   }
   const onSliderChange = (e) => {
     const { target: { value } } = e;
     const n = Number(value);
     curr = n;
-    if(curr > -1) {
-      const { visitedNodesInOrder, nodesInShortestPathOrder, queue } = workAlgorithm(
-        ROWS,
-        COLUMNS,
-        [START_NODE_ROW, START_NODE_COL],
-        [FINISH_NODE_ROW, FINISH_NODE_COL],
-        curr,
-        algorithm === "dijstra" ? dijkstraOg : astar,
-      );
-      const nodesInShortestPath = Number.isFinite(
-        nodesInShortestPathOrder[0].distance,
-      )
-        ? nodesInShortestPathOrder
-        : [];
-      const visitedNodeMap = visitedNodesInOrder.reduce((acc, node) => {
-        return acc.set(node.id, node);
-      }, new Map<string, VisualizerNode>());
-      const shortestPathNodeMap = nodesInShortestPath.reduce((acc, node) => {
-        return acc.set(node.id, node);
-      }, new Map<string, VisualizerNode>());
-      const queuedNodeMap = queue.reduce((acc, node) => {
-        return acc.set(node.id, node);
-      }, new Map<string, VisualizerNode>());
-      grid.forEach((row) => {
-        row.forEach((node) => {
-          if (visitedNodeMap.has(node.id)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const visitedNode = visitedNodeMap.get(node.id)!;
-            node.isVisited = visitedNode.isVisited;
-            node.distance = visitedNode.distance;
-            node.previousNode = visitedNode.previousNode;
-          } else {
-            node.isVisited = false;
-            node.distance = Number.POSITIVE_INFINITY;
-            node.previousNode = undefined;
-          }
-          node.isOnShortestPath = shortestPathNodeMap.has(node.id);
-          node.isOnQueue = queuedNodeMap.has(node.id);
-        });
-      });
-      grid = grid;
-    } else {
-      grid.forEach((row) => {
-        row.forEach((node) => {
+    const { visitedNodesInOrder, nodesInShortestPathOrder, queue } = workAlgorithm(
+      ROWS,
+      COLUMNS,
+      [START_NODE_ROW, START_NODE_COL],
+      [FINISH_NODE_ROW, FINISH_NODE_COL],
+      curr,
+      algorithm === "dijstra" ? dijkstraOg : astar,
+    );
+    const nodesInShortestPath = Number.isFinite(
+      nodesInShortestPathOrder[0].distance,
+    )
+      ? nodesInShortestPathOrder
+      : [];
+    const visitedNodeMap = visitedNodesInOrder.reduce((acc, node) => {
+      return acc.set(node.id, node);
+    }, new Map<string, VisualizerNode>());
+    const shortestPathNodeMap = nodesInShortestPath.reduce((acc, node) => {
+      return acc.set(node.id, node);
+    }, new Map<string, VisualizerNode>());
+    const queuedNodeMap = queue.reduce((acc, node) => {
+      return acc.set(node.id, node);
+    }, new Map<string, VisualizerNode>());
+    grid.forEach((row) => {
+      row.forEach((node) => {
+        if (visitedNodeMap.has(node.id)) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const visitedNode = visitedNodeMap.get(node.id)!;
+          node.isVisited = visitedNode.isVisited;
+          node.distance = visitedNode.distance;
+          node.previousNode = visitedNode.previousNode;
+        } else {
           node.isVisited = false;
           node.distance = Number.POSITIVE_INFINITY;
           node.previousNode = undefined;
-          node.isOnShortestPath = false;
-          node.isOnQueue = false;
-        });
+        }
+        node.isOnShortestPath = shortestPathNodeMap.has(node.id);
+        node.isOnQueue = queuedNodeMap.has(node.id);
       });
-      grid = grid;
-    }
+    });
+    grid = grid;
   }
   // Performs Dijkstra's algorithm; returns *all* nodes in the order
   // in which they were visited. Also makes nodes point back to their
@@ -341,7 +330,7 @@
       <input
         type="range"
         min={-1}
-        max={visualized ? ROWS * COLUMNS : 0}
+        max={ROWS * COLUMNS}
         disabled={!visualized}
         name="slider"
         id="slider"
