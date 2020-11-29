@@ -118,12 +118,18 @@ import { buildGraph, workAlgorithm } from "../../algorithms";
         node.isOnQueue = queuedNodeMap.has(node.id);
         if(queuedNodeMap.has(node.id)) {
           const queuedNode = queuedNodeMap.get(node.id);
-          node.isVisited = queuedNode.isVisited;
-          node.distance = queuedNode.distance;
+          node.distance =  queuedNode.distance;
           node.previousNode = queuedNode.previousNode;
         }
         if(stepsToFind > -1) {
           node.isOnShortestPath = shortestPathNodeMap.has(node.id);
+          if(shortestPathNodeMap.has(node.id)) {
+            const shortestPathNode = shortestPathNodeMap.get(node.id);
+            node.distance =  shortestPathNode.distance;
+            node.previousNode = shortestPathNode.previousNode;
+          }
+        } else {
+          node.isOnShortestPath = false;
         }
       });
     });
