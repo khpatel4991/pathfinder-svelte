@@ -6,12 +6,13 @@
 } from '../../types';
   import Node from '$components/PathfindingVisualizer/Node.svelte';
   const START_NODE_ROW = 1;
-  const START_NODE_COL = 3;
-  const FINISH_NODE_ROW = 19;
-  const FINISH_NODE_COL = 16;
+  const START_NODE_COL = 18;
+  const FINISH_NODE_ROW = 14;
+  const FINISH_NODE_COL = 1;
   const ROWS = 20;
   const COLUMNS = 20;
   let visualized = false;
+  let algorithm = "astar";
   let grid: VisualizerNode[][] = buildGraph(
     ROWS,
     COLUMNS,
@@ -19,12 +20,8 @@
     [FINISH_NODE_ROW, FINISH_NODE_COL],
   );
   let curr = -1;
-  const onClick = () => {
-    if(visualized) {
-      curr = -1;
-    } else {
-      curr = 0;
-    }
+  const onClick = (e) => {
+    e.preventDefault();
     visualized = !visualized;
   }
   const onSliderChange = (e) => {
@@ -32,12 +29,13 @@
     const n = Number(value);
     curr = n;
     if(curr > -1) {
-      const { visitedNodesInOrder, nodesInShortestPathOrder, queue } = dijkstra(
+      const { visitedNodesInOrder, nodesInShortestPathOrder, queue } = workAlgorithm(
         ROWS,
         COLUMNS,
         [START_NODE_ROW, START_NODE_COL],
         [FINISH_NODE_ROW, FINISH_NODE_COL],
         curr,
+        algorithm === "dijstra" ? dijkstraOg : astar,
       );
       const nodesInShortestPath = Number.isFinite(
         nodesInShortestPathOrder[0].distance,
@@ -71,6 +69,17 @@
         });
       });
       grid = grid;
+    } else {
+      grid.forEach((row) => {
+        row.forEach((node) => {
+          node.isVisited = false;
+          node.distance = Number.POSITIVE_INFINITY;
+          node.previousNode = undefined;
+          node.isOnShortestPath = false;
+          node.isOnQueue = false;
+        });
+      });
+      grid = grid;
     }
   }
   // Performs Dijkstra's algorithm; returns *all* nodes in the order
@@ -99,15 +108,17 @@
     );
   }
 
-  export function dijkstra(
+  export function workAlgorithm(
     rows: number,
     columns: number,
     startNodeCoords: NodeCoordinates,
     endNodeCoords: NodeCoordinates,
     maxWanted = Number.POSITIVE_INFINITY,
+    algorithm: (grid: VisualizerNode[][], startNodeCoords: NodeCoordinates, targetNodeCoords: NodeCoordinates, maxWanted: number) => Pick<DijstrasReturnObject, "visitedNodesInOrder" | "queue">,
   ): DijstrasReturnObject {
     const g = buildGraph(rows, columns, startNodeCoords, endNodeCoords);
-    const { queue, visitedNodesInOrder } = dijkstraOg(
+    const { queue, visitedNodesInOrder } = algorithm.call(
+      this,
       g,
       startNodeCoords,
       endNodeCoords,
@@ -121,6 +132,74 @@
       nodesInShortestPathOrder,
       queue,
       visitedNodesInOrder,
+    };
+  }
+
+  // by backtracking from the finish node.
+  function astar(
+    grid: VisualizerNode[][],
+    startNodeCoords: NodeCoordinates,
+    targetNodeCoords: NodeCoordinates,
+    maxWanted: number,
+  ): Pick<DijstrasReturnObject, 'visitedNodesInOrder' | 'queue'> {
+    const visitedNodesInOrder: VisualizerNode[] = [];
+    const queue: VisualizerNode[] = [];
+    if (startNodeCoords === targetNodeCoords) {
+      return {
+        visitedNodesInOrder,
+        queue,
+      };
+    }
+    const startNode = grid[startNodeCoords[0]][startNodeCoords[1]];
+    const targetNode = grid[targetNodeCoords[0]][targetNodeCoords[1]];
+    const hueristics = Array.from(Array(grid.length), (_, i) => Array.from(Array(grid[0].length), (_, j) => {
+      return Math.sqrt((grid[i][j].row - targetNodeCoords[0]) ** 2 + (grid[i][j].column - targetNodeCoords[1]) ** 2)
+    }));
+    queue.push({ ...startNode, distance: 0 });
+    while (queue.length) {
+      if (visitedNodesInOrder.length >= maxWanted) {
+        return {
+          visitedNodesInOrder,
+          queue,
+        };
+      }
+      queue.sort(nodesByAscDistance);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const closestNode = queue.shift()!;
+      if (grid[closestNode.row][closestNode.column].isVisited) {
+        continue;
+      }
+      // If we encounter a wall, we skip it.
+      if (closestNode.isWall) {
+        continue;
+      }
+      // If the closest node is at a distance of infinity,
+      // we must be trapped and should therefore stop.
+      if (closestNode.distance === Number.POSITIVE_INFINITY) {
+        return {
+          visitedNodesInOrder,
+          queue,
+        };
+      }
+      grid[closestNode.row][closestNode.column].isVisited = true;
+      grid[closestNode.row][closestNode.column].distance = closestNode.distance;
+      visitedNodesInOrder.push(grid[closestNode.row][closestNode.column]);
+      if (closestNode.id === targetNode.id)
+        return {
+          visitedNodesInOrder,
+          queue,
+        };
+      const unvisitedNeighbors = getUnvisitedNeighbors(closestNode, grid);
+      unvisitedNeighbors.forEach((n) => {
+        grid[n.row][n.column].distance = hueristics[n.row][n.column];
+        grid[n.row][n.column].previousNode = closestNode.id;
+        queue.push(grid[n.row][n.column]);
+      });
+    }
+    // never reach here for valid inputs.
+    return {
+      visitedNodesInOrder,
+      queue,
     };
   }
 
@@ -250,25 +329,32 @@
 
 <div class="container">
   <div>
+    <select disabled={visualized} bind:value={algorithm}>
+      <option value="dijstra">Dijkstra</option>
+      <option value="astar">A *</option>
+    </select>
     <button class="runbutton" on:click={onClick}>
       {visualized ? 'Reset' : 'Run'}
     </button>
-    <input
-      type="range"
-      min={visualized ? 0 : -1}
-      max={visualized ? ROWS * COLUMNS : 0}
-      disabled={!visualized}
-      name="slider"
-      id="slider"
-      on:input={onSliderChange}
-    />
-    <label for="slider">{curr}</label>
+    <div>
+      <label disabled={!visualized} for="slider">Visited Nodes: {curr}</label>
+      <input
+        type="range"
+        min={-1}
+        max={visualized ? ROWS * COLUMNS : 0}
+        disabled={!visualized}
+        name="slider"
+        id="slider"
+        on:input={onSliderChange}
+        bind:value={curr}
+      />
+    </div>
   </div>
   <div class="grid">
     {#each grid as row}
       <div class="row">
         {#each row as node (node.id)}
-          <Node {...node} />
+          <Node isFinish={node.isFinish} isStart={node.isStart} isVisited={node.isVisited} isOnShortestPath={node.isOnShortestPath} isOnQueue={node.isOnQueue} distance={node.distance} />
         {/each}
       </div>
     {/each}
