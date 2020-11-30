@@ -35,7 +35,6 @@ import { buildGraph, workAlgorithm } from "../../algorithms";
     const { target: { value } } = e;
     const n = Number(value);
     step = n;
-    // doWork();
   }
   const redrawGrid = () => {
     const walled = grid.reduce((acc, row, i) => {
@@ -274,7 +273,8 @@ import { buildGraph, workAlgorithm } from "../../algorithms";
     <label for="algorithm">Algorithm :</label>
     <select id="algorithm" disabled={visualized} bind:value={algorithm}>
       <option value="astar">A *</option>
-      <option value="dijkstra">Dijkstra</option>
+      <option value="dijkstra">Dijkstra (Same as BFS for grids)</option>
+      <option value="dfs">DFS (Broken)</option>
     </select>
     <button class="runbutton" on:click={onClick}>
       {visualized ? '(R)eset' : '(R)run'}

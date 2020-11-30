@@ -28,4 +28,4 @@ export type AlgorithmFn = (
   maxWanted: number
 ) => Omit<GraphAlgorithmResults, "nodesInShortestPathOrder">;
 
-export type GraphAlgorithm = "astar" | "dijkstra";
+export type GraphAlgorithm = "astar" | "dijkstra" | "dfs";

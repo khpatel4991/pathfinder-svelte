@@ -50,8 +50,9 @@ export function workAlgorithm(
     wallCoords
   );
   const map: Record<GraphAlgorithm, AlgorithmFn> = {
-    astar: astar,
-    dijkstra: dijkstraOg,
+    astar,
+    dijkstra,
+    dfs,
   };
   const { queue, visitedNodesInOrder, stepsToFind } = map[algorithm].call(
     this,
@@ -147,7 +148,7 @@ export function astar(
 }
 
 // by backtracking from the finish node.
-export function dijkstraOg(
+export function dijkstra(
   grid: VisualizerNode[][],
   startNodeCoords: NodeCoordinates,
   targetNodeCoords: NodeCoordinates,
@@ -213,10 +214,101 @@ export function dijkstraOg(
   };
 }
 
+export function dfs(
+  grid: VisualizerNode[][],
+  startNodeCoords: NodeCoordinates,
+  targetNodeCoords: NodeCoordinates,
+  maxWanted: number
+): Omit<GraphAlgorithmResults, "nodesInShortestPathOrder"> {
+  const visitedNodesInOrder: VisualizerNode[] = [];
+  const queue: VisualizerNode[] = [];
+  if (startNodeCoords[0] === targetNodeCoords[0] && startNodeCoords[1] === targetNodeCoords[1]) {
+    return {
+      visitedNodesInOrder,
+      queue,
+      stepsToFind: 0,
+    };
+  }
+  let i = 0;
+  const startNode = grid[startNodeCoords[0]][startNodeCoords[1]];
+  const targetNode = grid[targetNodeCoords[0]][targetNodeCoords[1]];
+  queue.push({ ...startNode, distance: 0 });
+  while (queue.length && (maxWanted > visitedNodesInOrder.length)) {
+    i += 1;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const closestNode = queue.pop()!;
+    if (grid[closestNode.row][closestNode.column].isVisited) {
+      continue;
+    }
+    // If we encounter a wall, we skip it.
+    if (closestNode.isWall) {
+      continue;
+    }
+    // If the closest node is at a distance of infinity,
+    // we must be trapped and should therefore stop.
+    if (closestNode.distance === Number.POSITIVE_INFINITY) {
+      return {
+        visitedNodesInOrder,
+        queue,
+        stepsToFind: -1,
+      };
+    }
+    if (closestNode.id === targetNode.id) {
+      return {
+        visitedNodesInOrder,
+        queue,
+        stepsToFind: i,
+      };
+    }
+    grid[closestNode.row][closestNode.column].isVisited = true;
+    grid[closestNode.row][closestNode.column].distance = closestNode.distance;
+    visitedNodesInOrder.push(grid[closestNode.row][closestNode.column]);
+    const unvisitedNeighbors = getUnvisitedNeighbors(closestNode, grid);
+    const unwalledNeighbors = unvisitedNeighbors.filter((n) => !n.isWall);
+    unwalledNeighbors.forEach((n) => {
+      grid[n.row][n.column].distance = closestNode.distance + 1;
+      grid[n.row][n.column].previousNode = closestNode.id;
+      queue.push(grid[n.row][n.column]);
+    });
+  }
+  // never reach here for valid inputs.
+  return {
+    visitedNodesInOrder,
+    queue,
+    stepsToFind: -1,
+  };
+}
+
+const dfsOg = (
+  grid: VisualizerNode[][],
+  startNodeCoords: NodeCoordinates,
+  targetNodeCoords: NodeCoordinates,
+  maxWanted: number
+) => {
+  return dfsh(grid, grid[startNodeCoords[0]][startNodeCoords[1]].id, grid[targetNodeCoords[0]][targetNodeCoords[1]].id)
+}
+
+const dfsh = (grid: VisualizerNode[][], curr: string, target: string): boolean => {
+  const [_, rs, cs] = curr.split(":");
+  const r = Number(rs);
+  const c = Number(cs);
+  if(grid[r][c].isVisited) {
+    return false;
+  }
+  grid[r][c].isVisited = true;
+  if(curr === target) {
+    return true;
+  }
+  const neighbors = getNeighbors(grid[r][c], grid);
+  return neighbors.reduce((acc, n) => {
+    return acc || dfsh(grid, n.id, target);
+  }, false) 
+}
+
 const nodesByAscDistance = (nodeA: VisualizerNode, nodeB: VisualizerNode) =>
   nodeA.distance - nodeB.distance;
 
-function getUnvisitedNeighbors(
+function getNeighbors(
   node: VisualizerNode,
   grid: VisualizerNode[][]
 ): VisualizerNode[] {
@@ -226,7 +318,14 @@ function getUnvisitedNeighbors(
   if (row < grid.length - 1) neighbors.push(grid[row + 1][column]);
   if (column > 0) neighbors.push(grid[row][column - 1]);
   if (column < grid[0].length - 1) neighbors.push(grid[row][column + 1]);
-  return neighbors.filter((neighbor) => !neighbor.isVisited);
+  return neighbors;
+}
+
+function getUnvisitedNeighbors(
+  node: VisualizerNode,
+  grid: VisualizerNode[][]
+): VisualizerNode[] {
+  return getNeighbors(node, grid).filter((neighbor) => !neighbor.isVisited);
 }
 
 // Backtracks from the finishNode to find the shortest path.
