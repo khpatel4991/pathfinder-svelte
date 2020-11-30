@@ -49,24 +49,9 @@
   .node-wall {
     background-image: linear-gradient(to right, #434343 0%, black 100%);
   }
-
-  .node-start.node-visited {
-    background-image: linear-gradient(
-      -45deg,
-      rgba(0, 190, 218, 0.75) 0%,
-      rgba(0, 190, 218, 0) 100%
-    );
-  }
-  .node-finish.node-visited {
-    background-image: linear-gradient(
-      -45deg,
-      rgba(11, 63, 9, 0.75) 0%,
-      rgba(11, 63, 9, 0) 100%
-    );
-  }
 </style>
 
-<div on:mouseover={handleMouseOver} class={`node ${isWall ? 'node-wall' : ''} ${isFinish ? 'node-finish' : isStart ? 'node-start' : ''} ${isVisited ? 'node-visited' : ''} ${isOnShortestPath ? 'node-shortest-path' : ''} ${isOnQueue ? 'node-on-queue' : ''}`}>
+<div on:mouseover={handleMouseOver} class={`node ${isWall ? 'node-wall' : ''} ${isVisited ? 'node-visited' : ''} ${isOnShortestPath ? 'node-shortest-path' : ''} ${isOnQueue ? 'node-on-queue' : ''} ${isFinish ? 'node-finish' : isStart ? 'node-start' : ''}`}>
   {#if isOnShortestPath || isVisited || isOnQueue}
     {distance.toFixed(2)}
   {/if}

@@ -39,8 +39,8 @@ export function workAlgorithm(
   startNodeCoords: NodeCoordinates,
   endNodeCoords: NodeCoordinates,
   wallCoords = new Set<string>(),
-  maxWanted = Number.POSITIVE_INFINITY,
   algorithm: GraphAlgorithm,
+  maxWanted = Number.POSITIVE_INFINITY,
 ): GraphAlgorithmResults {
   const g = buildGraph(
     rows,

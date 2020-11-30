@@ -25,20 +25,33 @@ import { buildGraph, workAlgorithm } from "../../algorithms";
     e.preventDefault();
     e.stopPropagation();
     visualized = !visualized;
-    onSliderChange({ target: { value: 0 } })
+    if(visualized) {
+      doWork();
+    } else {
+      redrawGrid();
+    }
   }
   const onSliderChange = (e) => {
     const { target: { value } } = e;
     const n = Number(value);
     step = n;
-    doWork();
+    // doWork();
   }
   const redrawGrid = () => {
+    const walled = grid.reduce((acc, row, i) => {
+      return row.reduce((acc2, node, j) => {
+        if(node.isWall) { return acc2.add(node.id) }
+        return acc2;
+      }, acc);
+    }, new Set<string>());
+    walled.delete(`n:${startNodeRow}:${startNodeCol}`);
+    walled.delete(`n:${finishNodeRow}:${finishNodeCol}`);
     grid = buildGraph(
       rows,
       columns,
       [startNodeRow, startNodeCol],
       [finishNodeRow, finishNodeCol],
+      walled,
     );
     wallmode = false;
   }
@@ -54,12 +67,35 @@ import { buildGraph, workAlgorithm } from "../../algorithms";
   }
 
   const handleKeydown = (event) => {
+    if (event.defaultPrevented) {
+      return; // Do nothing if event already handled
+    }
     const { key } = event;
     switch (key) {
       case "D":
       case "d":
         if(!visualized) {
           toggleWallMode();
+        }
+        break;
+      case "R":
+      case "r":
+        if(!visualized) {
+          doWork();
+        }
+        visualized = !visualized;
+        step = 0;
+        break;
+      case "ArrowRight":
+        event.preventDefault();
+        if(visualized && step < (rows * columns)) {
+          step = step + 1;
+        }
+        break;
+      case "ArrowLeft":
+        event.preventDefault();
+        if(visualized && step > -1) {
+          step = step - 1;
         }
         break;
       default:
@@ -90,7 +126,6 @@ import { buildGraph, workAlgorithm } from "../../algorithms";
       [startNodeRow, startNodeCol],
       [finishNodeRow, finishNodeCol],
       walled,
-      step,
       algorithm,
     );
     const visitedNodeMap = visitedNodesInOrder.reduce((acc, node) => {
@@ -104,30 +139,23 @@ import { buildGraph, workAlgorithm } from "../../algorithms";
     }, new Map<string, VisualizerNode>());
     grid.forEach((row) => {
       row.forEach((node) => {
-        if (visitedNodeMap.has(node.id)) {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const visitedNode = visitedNodeMap.get(node.id)!;
-          node.isVisited = visitedNode.isVisited;
-          node.distance = visitedNode.distance;
-          node.previousNode = visitedNode.previousNode;
-        } else {
-          node.isVisited = false;
-          node.distance = Number.POSITIVE_INFINITY;
-          node.previousNode = undefined;
-        }
         node.isOnQueue = queuedNodeMap.has(node.id);
         if(queuedNodeMap.has(node.id)) {
           const queuedNode = queuedNodeMap.get(node.id);
           node.distance =  queuedNode.distance;
           node.previousNode = queuedNode.previousNode;
         }
-        if(stepsToFind > -1) {
-          node.isOnShortestPath = shortestPathNodeMap.has(node.id);
-          if(shortestPathNodeMap.has(node.id)) {
-            const shortestPathNode = shortestPathNodeMap.get(node.id);
-            node.distance =  shortestPathNode.distance;
-            node.previousNode = shortestPathNode.previousNode;
-          }
+        if (visitedNodeMap.has(node.id)) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const visitedNode = visitedNodeMap.get(node.id)!;
+          node.isVisited = true;
+        } else {
+          node.isVisited = false;
+        }
+        if(stepsToFind > -1 && shortestPathNodeMap.has(node.id)) {
+          const shortestPathNode = shortestPathNodeMap.get(node.id);
+          node.isOnShortestPath = true;
+          node.distance = shortestPathNode.distance;
         } else {
           node.isOnShortestPath = false;
         }
@@ -249,21 +277,23 @@ import { buildGraph, workAlgorithm } from "../../algorithms";
       <option value="dijkstra">Dijkstra</option>
     </select>
     <button class="runbutton" on:click={onClick}>
-      {visualized ? 'Reset' : 'Run'}
+      {visualized ? '(R)eset' : '(R)run'}
     </button>
     <div>
     {#if visualized}
-      <label disabled={!visualized} for="slider">Visited Nodes: {step}</label>
-      <input
-        type="range"
-        min={-1}
-        max={rows * columns}
-        disabled={!visualized}
-        name="slider"
-        id="slider"
-        on:input={onSliderChange}
-        bind:value={step}
-      />
+      <div>
+        <label disabled={!visualized} for="slider">Visited Nodes(found: {visualized}): {step}</label>
+        <input
+          type="range"
+          min={-1}
+          max={rows * columns}
+          disabled={!visualized}
+          name="slider"
+          id="slider"
+          on:input={onSliderChange}
+          bind:value={step}
+        />
+      </div>
     {:else}
       <button class="wallmode" on:click={toggleWallMode}>
         {wallmode ? "Stop (D)rawing Wall" : "Draw Wall (D)"}
