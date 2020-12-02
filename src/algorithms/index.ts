@@ -315,6 +315,29 @@ function getNeighbors(node: VisualizerNode, grid: VisualizerNode[][]): Visualize
   return neighbors;
 }
 
+export function getAllNeighbours(
+  node: Pick<VisualizerNode, 'row' | 'column'>,
+  grid: VisualizerNode[][],
+): VisualizerNode[] {
+  const { row, column } = node;
+  const allNeighbourIndices: NodeCoordinates[] = [
+    [row - 1, column - 1], // tl,
+    [row - 1, column], // t
+    [row - 1, column + 1], // tr
+    [row, column + 1], // r
+    [row + 1, column + 1], // br,
+    [row + 1, column], // b
+    [row + 1, column - 1], // bl
+    [row, column - 1], //  l
+  ];
+  const filtered = allNeighbourIndices.filter(([r, c]) => {
+    const validRowIndex = r >= 0 && r < grid.length - 1;
+    const validColumnIndex = c >= 0 && c < grid.length - 1;
+    return validRowIndex && validColumnIndex;
+  });
+  return filtered.map((coords) => grid[coords[0]][coords[1]]);
+}
+
 function getUnvisitedNeighbors(node: VisualizerNode, grid: VisualizerNode[][]): VisualizerNode[] {
   return getNeighbors(node, grid).filter((neighbor) => !neighbor.isVisited);
 }

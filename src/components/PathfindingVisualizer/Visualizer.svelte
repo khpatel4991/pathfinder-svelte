@@ -149,6 +149,7 @@ const drawGrid = () => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const visitedNode = visitedNodeMap.get(node.id)!;
         node.isVisited = true;
+        node.distance = visitedNode.distance;
       } else {
         node.isVisited = false;
       }
