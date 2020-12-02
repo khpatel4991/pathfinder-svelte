@@ -47,7 +47,7 @@ const onClick = (e) => {
   if (visualized) {
     doWork();
   } else {
-    redrawGrid();
+    resetGrid();
   }
 };
 const onSliderChange = (e) => {
@@ -56,26 +56,6 @@ const onSliderChange = (e) => {
   } = e;
   const n = Number(value);
   step = n;
-};
-const redrawGrid = () => {
-  const walled = grid.reduce((acc, row, i) => {
-    return row.reduce((acc2, node, j) => {
-      if (node.isWall) {
-        return acc2.add(node.id);
-      }
-      return acc2;
-    }, acc);
-  }, new Set<string>());
-  walled.delete(`n:${startNodeRow}:${startNodeCol}`);
-  walled.delete(`n:${finishNodeRow}:${finishNodeCol}`);
-  grid = buildGraph(
-    rows,
-    columns,
-    [startNodeRow, startNodeCol],
-    [finishNodeRow, finishNodeCol],
-    walled,
-  );
-  wallmode = false;
 };
 
 const toggleWallMode = () => {
@@ -135,6 +115,27 @@ const resetWalls = () => {
   wallmode = false;
 };
 
+const resetGrid = () => {
+  const walled = grid.reduce((acc, row, i) => {
+    return row.reduce((acc2, node, j) => {
+      if (node.isWall) {
+        return acc2.add(node.id);
+      }
+      return acc2;
+    }, acc);
+  }, new Set<string>());
+  walled.delete(`n:${startNodeRow}:${startNodeCol}`);
+  walled.delete(`n:${finishNodeRow}:${finishNodeCol}`);
+  grid = buildGraph(
+    rows,
+    columns,
+    [startNodeRow, startNodeCol],
+    [finishNodeRow, finishNodeCol],
+    walled,
+  );
+  wallmode = false;
+};
+
 const drawGrid = () => {
   grid.forEach((row) => {
     row.forEach((node) => {
@@ -173,7 +174,7 @@ const doWork = () => {
       return acc2;
     }, acc);
   }, new Set<string>());
-  const { visitedNodesInOrder, nodesInShortestPathOrder, queue, stepsToFind } = workAlgorithm(
+  const { visitedNodesInOrder, nodesInShortestPathOrder, queue, stepsToFind: s } = workAlgorithm(
     rows,
     columns,
     [startNodeRow, startNodeCol],
@@ -190,6 +191,7 @@ const doWork = () => {
   queuedNodeMap = queue.reduce((acc, node) => {
     return acc.set(node.id, node);
   }, new Map<string, VisualizerNode>());
+  stepsToFind = s;
   drawGrid();
 };
 </script>
@@ -207,7 +209,7 @@ const doWork = () => {
         name="rows"
         id="rows"
         bind:value="{rows}"
-        on:input="{redrawGrid}"
+        on:input="{resetGrid}"
       />
     </div>
     <div>
@@ -220,7 +222,7 @@ const doWork = () => {
         name="columns"
         id="columns"
         bind:value="{columns}"
-        on:input="{redrawGrid}"
+        on:input="{resetGrid}"
       />
     </div>
     <div>
@@ -233,7 +235,7 @@ const doWork = () => {
         name="startNodeRow"
         id="startNodeRow"
         bind:value="{startNodeRow}"
-        on:input="{redrawGrid}"
+        on:input="{resetGrid}"
       />
     </div>
     <div>
@@ -246,7 +248,7 @@ const doWork = () => {
         name="startNodeCol"
         id="startNodeCol"
         bind:value="{startNodeCol}"
-        on:input="{redrawGrid}"
+        on:input="{resetGrid}"
       />
     </div>
     <div>
@@ -259,7 +261,7 @@ const doWork = () => {
         name="finishNodeRow"
         id="finishNodeRow"
         bind:value="{finishNodeRow}"
-        on:input="{redrawGrid}"
+        on:input="{resetGrid}"
       />
     </div>
     <div>
@@ -272,7 +274,7 @@ const doWork = () => {
         name="finishNodeCol"
         id="finishNodeCol"
         bind:value="{finishNodeCol}"
-        on:input="{redrawGrid}"
+        on:input="{resetGrid}"
       />
     </div>
   </div>
@@ -293,13 +295,14 @@ const doWork = () => {
           <input
             type="range"
             min="{-1}"
-            max="{rows * columns}"
+            max="{visitedNodeMap.size}"
             disabled="{!visualized}"
             name="slider"
             id="slider"
             on:input="{onSliderChange}"
             bind:value="{step}"
           />
+          <p>Found nodes after visiting {visitedNodeMap.size} nodes.</p>
         </div>
       {:else}
         <button class="wallmode" on:click="{toggleWallMode}">
