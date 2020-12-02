@@ -10,7 +10,7 @@ export interface VisualizerNode {
   isOnShortestPath: boolean;
   isOnQueue: boolean;
   previousNode?: string;
-};
+}
 
 export type NodeCoordinates = [row: number, column: number];
 
@@ -19,13 +19,13 @@ export interface GraphAlgorithmResults {
   queue: VisualizerNode[];
   visitedNodesInOrder: VisualizerNode[];
   stepsToFind: number;
-};
+}
 
 export type AlgorithmFn = (
   grid: VisualizerNode[][],
   startNodeCoords: NodeCoordinates,
   targetNodeCoords: NodeCoordinates,
-  maxWanted: number
-) => Omit<GraphAlgorithmResults, "nodesInShortestPathOrder">;
+  maxWanted: number,
+) => Omit<GraphAlgorithmResults, 'nodesInShortestPathOrder'>;
 
-export type GraphAlgorithm = "astar" | "dijkstra" | "dfs";
+export type GraphAlgorithm = 'astar' | 'dijkstra' | 'dfs';

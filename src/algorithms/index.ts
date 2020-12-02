@@ -4,7 +4,7 @@ import type {
   VisualizerNode,
   GraphAlgorithmResults,
   AlgorithmFn,
-} from "../types";
+} from '../types';
 
 // Performs Dijkstra's algorithm; returns *all* nodes in the order
 // in which they were visited. Also makes nodes point back to their
@@ -14,7 +14,7 @@ export function buildGraph(
   columns: number,
   startNodeCoordinates: NodeCoordinates,
   targetNodeCoordinates: NodeCoordinates,
-  wallNodeIds = new Set<string>()
+  wallNodeIds = new Set<string>(),
 ): VisualizerNode[][] {
   return Array.from(Array(rows), (_, i) =>
     Array.from<any, VisualizerNode>(Array(columns), (__, j) => ({
@@ -22,14 +22,13 @@ export function buildGraph(
       row: i,
       column: j,
       isStart: i === startNodeCoordinates[0] && j === startNodeCoordinates[1],
-      isFinish:
-        i === targetNodeCoordinates[0] && j === targetNodeCoordinates[1],
+      isFinish: i === targetNodeCoordinates[0] && j === targetNodeCoordinates[1],
       isWall: wallNodeIds.has(`n:${i}:${j}`),
       distance: Number.POSITIVE_INFINITY,
       isVisited: false,
       isOnShortestPath: false,
       isOnQueue: false,
-    }))
+    })),
   );
 }
 
@@ -42,13 +41,7 @@ export function workAlgorithm(
   algorithm: GraphAlgorithm,
   maxWanted = Number.POSITIVE_INFINITY,
 ): GraphAlgorithmResults {
-  const g = buildGraph(
-    rows,
-    columns,
-    startNodeCoords,
-    endNodeCoords,
-    wallCoords
-  );
+  const g = buildGraph(rows, columns, startNodeCoords, endNodeCoords, wallCoords);
   const map: Record<GraphAlgorithm, AlgorithmFn> = {
     astar,
     dijkstra,
@@ -59,11 +52,11 @@ export function workAlgorithm(
     g,
     startNodeCoords,
     endNodeCoords,
-    maxWanted
+    maxWanted,
   );
   const nodesInShortestPathOrder = getNodesInShortestPathOrder(
     g,
-    g[endNodeCoords[0]][endNodeCoords[1]]
+    g[endNodeCoords[0]][endNodeCoords[1]],
   );
   return {
     nodesInShortestPathOrder,
@@ -78,8 +71,8 @@ export function astar(
   grid: VisualizerNode[][],
   startNodeCoords: NodeCoordinates,
   targetNodeCoords: NodeCoordinates,
-  maxWanted: number
-): Omit<GraphAlgorithmResults, "nodesInShortestPathOrder"> {
+  maxWanted: number,
+): Omit<GraphAlgorithmResults, 'nodesInShortestPathOrder'> {
   const visitedNodesInOrder: VisualizerNode[] = [];
   const queue: VisualizerNode[] = [];
   let i = 0;
@@ -96,15 +89,15 @@ export function astar(
     Array.from(Array(grid[0].length), (_, j) => {
       return Math.sqrt(
         (grid[i][j].row - targetNodeCoords[0]) ** 2 +
-          (grid[i][j].column - targetNodeCoords[1]) ** 2
+          (grid[i][j].column - targetNodeCoords[1]) ** 2,
       );
-    })
+    }),
   );
   queue.push({
     ...startNode,
     distance: hueristics[startNodeCoords[0]][startNodeCoords[1]],
   });
-  while (queue.length && (maxWanted > visitedNodesInOrder.length)) {
+  while (queue.length && maxWanted > visitedNodesInOrder.length) {
     i += 1;
     queue.sort(nodesByAscDistance);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -152,8 +145,8 @@ export function dijkstra(
   grid: VisualizerNode[][],
   startNodeCoords: NodeCoordinates,
   targetNodeCoords: NodeCoordinates,
-  maxWanted: number
-): Omit<GraphAlgorithmResults, "nodesInShortestPathOrder"> {
+  maxWanted: number,
+): Omit<GraphAlgorithmResults, 'nodesInShortestPathOrder'> {
   const visitedNodesInOrder: VisualizerNode[] = [];
   const queue: VisualizerNode[] = [];
   if (startNodeCoords[0] === targetNodeCoords[0] && startNodeCoords[1] === targetNodeCoords[1]) {
@@ -167,7 +160,7 @@ export function dijkstra(
   const startNode = grid[startNodeCoords[0]][startNodeCoords[1]];
   const targetNode = grid[targetNodeCoords[0]][targetNodeCoords[1]];
   queue.push({ ...startNode, distance: 0 });
-  while (queue.length && (maxWanted > visitedNodesInOrder.length)) {
+  while (queue.length && maxWanted > visitedNodesInOrder.length) {
     i += 1;
     queue.sort(nodesByAscDistance);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -218,8 +211,8 @@ export function dfs(
   grid: VisualizerNode[][],
   startNodeCoords: NodeCoordinates,
   targetNodeCoords: NodeCoordinates,
-  maxWanted: number
-): Omit<GraphAlgorithmResults, "nodesInShortestPathOrder"> {
+  maxWanted: number,
+): Omit<GraphAlgorithmResults, 'nodesInShortestPathOrder'> {
   const visitedNodesInOrder: VisualizerNode[] = [];
   const queue: VisualizerNode[] = [];
   if (startNodeCoords[0] === targetNodeCoords[0] && startNodeCoords[1] === targetNodeCoords[1]) {
@@ -233,7 +226,7 @@ export function dfs(
   const startNode = grid[startNodeCoords[0]][startNodeCoords[1]];
   const targetNode = grid[targetNodeCoords[0]][targetNodeCoords[1]];
   queue.push({ ...startNode, distance: 0 });
-  while (queue.length && (maxWanted > visitedNodesInOrder.length)) {
+  while (queue.length && maxWanted > visitedNodesInOrder.length) {
     i += 1;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const closestNode = queue.pop()!;
@@ -283,35 +276,36 @@ const dfsOg = (
   grid: VisualizerNode[][],
   startNodeCoords: NodeCoordinates,
   targetNodeCoords: NodeCoordinates,
-  maxWanted: number
+  maxWanted: number,
 ) => {
-  return dfsh(grid, grid[startNodeCoords[0]][startNodeCoords[1]].id, grid[targetNodeCoords[0]][targetNodeCoords[1]].id)
-}
+  return dfsh(
+    grid,
+    grid[startNodeCoords[0]][startNodeCoords[1]].id,
+    grid[targetNodeCoords[0]][targetNodeCoords[1]].id,
+  );
+};
 
 const dfsh = (grid: VisualizerNode[][], curr: string, target: string): boolean => {
-  const [_, rs, cs] = curr.split(":");
+  const [_, rs, cs] = curr.split(':');
   const r = Number(rs);
   const c = Number(cs);
-  if(grid[r][c].isVisited) {
+  if (grid[r][c].isVisited) {
     return false;
   }
   grid[r][c].isVisited = true;
-  if(curr === target) {
+  if (curr === target) {
     return true;
   }
   const neighbors = getNeighbors(grid[r][c], grid);
   return neighbors.reduce((acc, n) => {
     return acc || dfsh(grid, n.id, target);
-  }, false) 
-}
+  }, false);
+};
 
 const nodesByAscDistance = (nodeA: VisualizerNode, nodeB: VisualizerNode) =>
   nodeA.distance - nodeB.distance;
 
-function getNeighbors(
-  node: VisualizerNode,
-  grid: VisualizerNode[][]
-): VisualizerNode[] {
+function getNeighbors(node: VisualizerNode, grid: VisualizerNode[][]): VisualizerNode[] {
   const neighbors = [];
   const { column, row } = node;
   if (row > 0) neighbors.push(grid[row - 1][column]);
@@ -321,10 +315,7 @@ function getNeighbors(
   return neighbors;
 }
 
-function getUnvisitedNeighbors(
-  node: VisualizerNode,
-  grid: VisualizerNode[][]
-): VisualizerNode[] {
+function getUnvisitedNeighbors(node: VisualizerNode, grid: VisualizerNode[][]): VisualizerNode[] {
   return getNeighbors(node, grid).filter((neighbor) => !neighbor.isVisited);
 }
 
@@ -332,15 +323,16 @@ function getUnvisitedNeighbors(
 // Only works when called *after* the dijkstra method above.
 function getNodesInShortestPathOrder(
   grid: VisualizerNode[][],
-  finishNode: VisualizerNode
+  finishNode: VisualizerNode,
 ): VisualizerNode[] {
   const nodesInShortestPathOrder = [];
   let currentNode: VisualizerNode | undefined = finishNode;
   while (currentNode) {
     nodesInShortestPathOrder.unshift(currentNode);
-    const backtrackedNodeIndices:
-      | undefined
-      | number[] = currentNode.previousNode?.split(":").slice(1).map(Number);
+    const backtrackedNodeIndices: undefined | number[] = currentNode.previousNode
+      ?.split(':')
+      .slice(1)
+      .map(Number);
     if (!backtrackedNodeIndices) {
       currentNode = undefined;
     } else {
