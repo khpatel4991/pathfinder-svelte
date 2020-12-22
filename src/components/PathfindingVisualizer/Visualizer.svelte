@@ -1,5 +1,4 @@
 <style>
-
 .grid {
   box-sizing: border-box;
   display: grid;
